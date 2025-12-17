@@ -1,0 +1,32 @@
+{
+  "name": "welltracker",
+  "version": "1.0.0",
+  "description": "Health tracking application for blood pressure and glucose monitoring",
+  "keywords": [
+    "react",
+    "vite",
+    "health",
+    "tracker"
+  ],
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^3.6.0",
+    "lucide-react": "^0.469.0",
+    "react-is": "^19.0.0",
+    "firebase": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^5.1.2",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.1"
+  }
+}
