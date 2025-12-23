@@ -247,7 +247,7 @@ function GlucoseSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
                                 let statusColor = "text-gray-900";
                                 let statusText = "-";
                                 if (record.mealStatus === "fasting") {
-                                    if (level < 70) {
+                                    if (level < 60) {
                                         statusText = "저혈당";
                                         statusColor = "text-red-600 font-bold";
                                     } else if (level <= 100) {
@@ -264,7 +264,7 @@ function GlucoseSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
                                     if (level > 180) {
                                         statusText = "높음";
                                         statusColor = "text-red-600 font-bold";
-                                    } else if (level < 70) {
+                                    } else if (level < 60) {
                                         statusText = "저혈당";
                                         statusColor = "text-red-600 font-bold";
                                     } else {
@@ -295,10 +295,10 @@ function GlucoseSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
                                         <td className="px-2 py-2 text-center whitespace-nowrap">
                                             <span
                                                 className={`text-xs px-2 py-1 rounded bg-opacity-20 inline-block ${statusColor.includes("red")
-                                                        ? "bg-red-100 text-red-700"
-                                                        : statusColor.includes("green")
-                                                            ? "bg-green-100 text-green-700"
-                                                            : "bg-gray-100 text-gray-700"
+                                                    ? "bg-red-100 text-red-700"
+                                                    : statusColor.includes("green")
+                                                        ? "bg-green-100 text-green-700"
+                                                        : "bg-gray-100 text-gray-700"
                                                     }`}
                                             >
                                                 {statusText}
@@ -388,6 +388,13 @@ function GlucoseSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
                         placeholder="100"
                         value={input.level}
                         onChange={(e) => setInput({ ...input, level: e.target.value })}
+                        enterKeyHint="done"
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                                e.preventDefault();
+                                e.target.blur();
+                            }
+                        }}
                         required
                     />
                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">

@@ -371,6 +371,13 @@ function BPSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
                             placeholder="120"
                             value={input.systolic}
                             onChange={(e) => setInput({ ...input, systolic: e.target.value })}
+                            enterKeyHint="done"
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    e.target.blur();
+                                }
+                            }}
                             required
                         />
                         <Input
@@ -381,6 +388,13 @@ function BPSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
                             onChange={(e) =>
                                 setInput({ ...input, diastolic: e.target.value })
                             }
+                            enterKeyHint="done"
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    e.target.blur();
+                                }
+                            }}
                             required
                         />
                     </div>
