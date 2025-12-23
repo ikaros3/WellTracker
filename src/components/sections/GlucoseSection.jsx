@@ -165,11 +165,11 @@ function GlucoseSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
                         </div>
                     </div>
                     {/* Average Display */}
-                    <div className="flex gap-4">
+                    <div className="flex gap-2">
                         {[
-                            { days: 7, label: "7일" },
-                            { days: 14, label: "14일", main: true },
-                            { days: 30, label: "30일" },
+                            { days: 7, label: "7일 평균" },
+                            { days: 14, label: "14일 평균", main: true },
+                            { days: 30, label: "30일 평균" },
                         ].map(({ days, label, main }) => {
                             // Helper to calculate difference in days
                             const getDiffDays = (date1, date2) => {
@@ -211,23 +211,42 @@ function GlucoseSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
                                 return getDiffDays(baselineDateStr, r.date) < days;
                             });
 
-                            const avg = recentRecords.length
+                            const avgVal = recentRecords.length
                                 ? Math.round(
                                     recentRecords.reduce((acc, r) => acc + parseInt(r.level), 0) /
                                     recentRecords.length
                                 )
-                                : "-";
+                                : null;
 
 
+
+                            // Determine color based on REF_RANGES
+                            let statusColor = "text-gray-400";
+                            if (avgVal !== null) {
+                                const ranges = REF_RANGES[filter] || REF_RANGES.all;
+                                if (filter === 'all') {
+                                    statusColor = avgVal > ranges.normal.y2 ? "text-orange-500" : "text-green-600";
+                                } else {
+                                    /* Safety check if specific ranges exist */
+                                    if (ranges.danger && avgVal >= ranges.danger.y1) statusColor = "text-red-600";
+                                    else if (ranges.pre && avgVal >= ranges.pre.y1) statusColor = "text-orange-500";
+                                    else statusColor = "text-green-600";
+                                }
+                            }
 
                             return (
                                 <div
                                     key={days}
-                                    className={`flex flex-col items-center ${main ? "text-teal-700" : "text-gray-400"}`}
+                                    className={`flex flex-col items-center justify-center px-3 py-1.5 rounded-lg border transition-colors duration-200 ${main
+                                            ? "bg-teal-50 border-teal-100 min-w-[80px]"
+                                            : "bg-white border-transparent hover:bg-gray-50 min-w-[70px]"
+                                        }`}
                                 >
-                                    <span className={`text-[10px] ${main ? "font-bold" : ""}`}>{label} 평균</span>
-                                    <span className={`text-sm ${main ? "font-bold" : "font-medium"}`}>
-                                        {avg}
+                                    <span className={`text-xs text-gray-500 mb-0.5 whitespace-nowrap`}>
+                                        {label}
+                                    </span>
+                                    <span className={`text-lg font-bold leading-none ${statusColor}`}>
+                                        {avgVal !== null ? avgVal : "-"}
                                     </span>
                                 </div>
                             );
