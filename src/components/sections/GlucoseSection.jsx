@@ -102,30 +102,34 @@ function GlucoseSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
         setDeleteId(null);
     };
 
-    const chartData = useMemo(() => {
-        let filteredRecords = records;
+    // Shared filtered records based on active filter
+    const filteredRecords = useMemo(() => {
         if (filter === "fasting") {
-            filteredRecords = records.filter((r) => r.mealStatus === "fasting");
+            return records.filter((r) => r.mealStatus === "fasting");
         } else if (filter === "one_hour_after") {
-            filteredRecords = records.filter((r) => r.mealStatus === "one_hour_after");
+            return records.filter((r) => r.mealStatus === "one_hour_after");
         } else if (filter === "two_hour_after") {
-            filteredRecords = records.filter((r) =>
+            return records.filter((r) =>
                 ["breakfast_after", "lunch_after", "dinner_after"].includes(r.mealStatus)
             );
         }
+        return records;
+    }, [records, filter]);
 
+    const chartData = useMemo(() => {
         return filteredRecords.map((r) => ({
             name: `${r.date.slice(5)} ${r.time}`,
             level: parseInt(r.level),
             status: mealOptions.find((o) => o.value === r.mealStatus)?.label,
             mealStatus: r.mealStatus,
+            date: r.date,
         }));
-    }, [records, filter]);
+    }, [filteredRecords]);
 
     const yDomain = [0, 300];
     const yTicks = [0, 50, 100, 150, 200, 250, 300];
 
-    const sortedRecords = useMemo(() => [...records].reverse(), [records]);
+    const sortedRecords = useMemo(() => [...filteredRecords].reverse(), [filteredRecords]);
     const totalPages = Math.ceil(sortedRecords.length / itemsPerPage);
     const currentRecords = useMemo(
         () =>
@@ -153,17 +157,81 @@ function GlucoseSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
                             {Object.values(REF_RANGES[filter] || REF_RANGES.all).map((range, idx) => (
                                 <span key={idx} className="text-xs flex items-center gap-1 text-gray-500">
                                     <span className={`w-2 h-2 rounded-full ${range.color === 'green' ? 'bg-green-500' :
-                                            range.color === 'orange' ? 'bg-orange-400' : 'bg-red-400'
+                                        range.color === 'orange' ? 'bg-orange-400' : 'bg-red-400'
                                         }`}></span>
                                     {range.label} ({range.y1}~{range.y2})
                                 </span>
                             ))}
                         </div>
                     </div>
-                    <div className="flex gap-4 text-xs">
-                        <div className="flex items-center gap-1">
-                            <div className="w-2 h-2 rounded-full bg-teal-600"></div>혈당
-                        </div>
+                    {/* Average Display */}
+                    <div className="flex gap-4">
+                        {[
+                            { days: 7, label: "7일" },
+                            { days: 14, label: "14일", main: true },
+                            { days: 30, label: "30일" },
+                        ].map(({ days, label, main }) => {
+                            // Helper to calculate difference in days
+                            const getDiffDays = (date1, date2) => {
+                                const d1 = new Date(date1);
+                                const d2 = new Date(date2);
+                                // Normalize to start of day to ignore time
+                                d1.setHours(0, 0, 0, 0);
+                                d2.setHours(0, 0, 0, 0);
+                                const diffTime = Math.abs(d2 - d1);
+                                return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            };
+
+                            const todayDate = new Date();
+                            const todayStr = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, '0')}-${String(todayDate.getDate()).padStart(2, '0')}`;
+
+                            // Determine Baseline Date for Average (Latest Date in Data or Today)
+                            // User Request: Use the last recorded date as the anchor for 7/14/30 days window.
+                            let baselineDateStr = todayStr;
+
+                            // 1. Filter by Condition (Meal Status)
+                            // Use the outer 'filteredRecords' which is already filtered by meal status.
+                            const targetRecords = filteredRecords;
+
+                            if (targetRecords.length > 0) {
+                                // Find the latest date in the filtered records
+                                baselineDateStr = targetRecords.reduce((max, r) => r.date > max ? r.date : max, targetRecords[0].date);
+                            }
+
+                            // 2. Filter by Date (Last N days from Baseline)
+                            const recentRecords = targetRecords.filter((r) => {
+                                if (!r.date) return false;
+
+                                // User requested baseline to be the last recorded date.
+                                // But if user enters future date by mistake? 
+                                // baselineDateStr is max of all records, so if there is future data, baseline moves to future.
+                                // That's probably intended behavior if we strictly follow "last date".
+                                // However, we should still ensure we don't pick up records *after* the baseline (which is impossible if baseline is max).
+
+                                return getDiffDays(baselineDateStr, r.date) < days;
+                            });
+
+                            const avg = recentRecords.length
+                                ? Math.round(
+                                    recentRecords.reduce((acc, r) => acc + parseInt(r.level), 0) /
+                                    recentRecords.length
+                                )
+                                : "-";
+
+
+
+                            return (
+                                <div
+                                    key={days}
+                                    className={`flex flex-col items-center ${main ? "text-teal-700" : "text-gray-400"}`}
+                                >
+                                    <span className={`text-[10px] ${main ? "font-bold" : ""}`}>{label} 평균</span>
+                                    <span className={`text-sm ${main ? "font-bold" : "font-medium"}`}>
+                                        {avg}
+                                    </span>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 
