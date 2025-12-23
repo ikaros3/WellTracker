@@ -27,28 +27,7 @@ import PaginationControls from '../common/PaginationControls';
 import ReferenceGuide from './ReferenceGuide';
 import { CustomYAxisTick, CustomXAxisTick, CustomGlucoseDot, CustomTooltip } from '../charts';
 import { useChartScroll } from '../../hooks/useChartScroll';
-import { mealOptions } from '../../constants';
-
-const REF_RANGES = {
-    fasting: {
-        normal: { y1: 70, y2: 99, color: "green", label: "정상" },
-        pre: { y1: 100, y2: 125, color: "orange", label: "전단계" },
-        danger: { y1: 126, y2: 300, color: "red", label: "관리필요" }
-    },
-    one_hour_after: {
-        normal: { y1: 70, y2: 179, color: "green", label: "정상" },
-        pre: { y1: 180, y2: 199, color: "orange", label: "전단계" },
-        danger: { y1: 200, y2: 300, color: "red", label: "관리필요" }
-    },
-    two_hour_after: {
-        normal: { y1: 70, y2: 139, color: "green", label: "정상" },
-        pre: { y1: 140, y2: 199, color: "orange", label: "전단계" },
-        danger: { y1: 200, y2: 300, color: "red", label: "관리필요" }
-    },
-    all: {
-        normal: { y1: 70, y2: 140, color: "green", label: "일반 관리 목표" }
-    }
-};
+import { mealOptions, REF_RANGES } from '../../constants';
 
 function GlucoseSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -117,13 +96,38 @@ function GlucoseSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
     }, [records, filter]);
 
     const chartData = useMemo(() => {
-        return filteredRecords.map((r) => ({
-            name: `${r.date.slice(5)} ${r.time}`,
-            level: parseInt(r.level),
-            status: mealOptions.find((o) => o.value === r.mealStatus)?.label,
-            mealStatus: r.mealStatus,
-            date: r.date,
-        }));
+        return filteredRecords.map((r) => {
+            const level = parseInt(r.level);
+            let statusLevel = "normal";
+
+            // Determine appropriate range based on meal status
+            let range = REF_RANGES.all;
+            if (r.mealStatus === 'fasting') {
+                range = REF_RANGES.fasting;
+            } else if (r.mealStatus === 'one_hour_after') {
+                range = REF_RANGES.one_hour_after;
+            } else if (['breakfast_after', 'lunch_after', 'dinner_after'].includes(r.mealStatus)) {
+                range = REF_RANGES.two_hour_after;
+            }
+
+            // Check hypoglycemia first, then danger, then pre
+            if (level < 70) {
+                statusLevel = "danger"; // Hypoglycemia is also dangerous
+            } else if (range.danger && level >= range.danger.y1) {
+                statusLevel = "danger";
+            } else if (range.pre && level >= range.pre.y1) {
+                statusLevel = "pre";
+            }
+
+            return {
+                name: `${r.date.slice(5)} ${r.time}`,
+                level: level,
+                status: mealOptions.find((o) => o.value === r.mealStatus)?.label,
+                mealStatus: r.mealStatus,
+                date: r.date,
+                statusLevel: statusLevel
+            };
+        });
     }, [filteredRecords]);
 
     const yDomain = [0, 300];
@@ -399,31 +403,30 @@ function GlucoseSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
                                 const level = parseInt(record.level);
                                 let statusColor = "text-gray-900";
                                 let statusText = "-";
-                                if (record.mealStatus === "fasting") {
-                                    if (level < 60) {
-                                        statusText = "저혈당";
-                                        statusColor = "text-red-600 font-bold";
-                                    } else if (level <= 100) {
-                                        statusText = "정상";
-                                        statusColor = "text-green-600 font-bold";
-                                    } else if (level <= 125) {
-                                        statusText = "주의";
-                                        statusColor = "text-yellow-600 font-bold";
-                                    } else {
-                                        statusText = "높음";
-                                        statusColor = "text-red-600 font-bold";
-                                    }
+
+                                // Determine appropriate range based on meal status
+                                let range = REF_RANGES.all;
+                                if (record.mealStatus === 'fasting') {
+                                    range = REF_RANGES.fasting;
+                                } else if (record.mealStatus === 'one_hour_after') {
+                                    range = REF_RANGES.one_hour_after;
+                                } else if (['breakfast_after', 'lunch_after', 'dinner_after'].includes(record.mealStatus)) {
+                                    range = REF_RANGES.two_hour_after;
+                                }
+
+                                // Check for hypoglycemia first (< 70 is universally low)
+                                if (level < 70) {
+                                    statusText = "저혈당";
+                                    statusColor = "text-red-600 font-bold";
+                                } else if (range.danger && level >= range.danger.y1) {
+                                    statusText = range.danger.label;
+                                    statusColor = "text-red-600 font-bold";
+                                } else if (range.pre && level >= range.pre.y1) {
+                                    statusText = range.pre.label;
+                                    statusColor = "text-orange-500 font-bold";
                                 } else {
-                                    if (level > 180) {
-                                        statusText = "높음";
-                                        statusColor = "text-red-600 font-bold";
-                                    } else if (level < 60) {
-                                        statusText = "저혈당";
-                                        statusColor = "text-red-600 font-bold";
-                                    } else {
-                                        statusText = "양호";
-                                        statusColor = "text-green-600 font-bold";
-                                    }
+                                    statusText = range.normal.label;
+                                    statusColor = "text-green-600 font-bold";
                                 }
                                 return (
                                     <tr key={record.id} className="hover:bg-gray-50">

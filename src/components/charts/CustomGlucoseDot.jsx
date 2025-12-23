@@ -3,31 +3,23 @@ import React from 'react';
 const CustomGlucoseDot = (props) => {
     const { cx, cy, payload, stroke } = props;
     const value = payload.level;
-    const status = payload.mealStatus;
+    const statusLevel = payload.statusLevel; // 'normal', 'pre', 'danger' passed from parent
+
     let fillColor = "#fff";
     let strokeColor = stroke;
     let r = 4;
     let isWarningOrDanger = false;
 
-    if (status === "fasting") {
-        if (value >= 100) isWarningOrDanger = true;
-        if (value >= 126 || value < 70) {
-            strokeColor = "#dc2626";
-            fillColor = "#fee2e2";
-        } else if (value >= 100) {
-            strokeColor = "#d97706";
-            fillColor = "#fef3c7";
-        }
-    } else {
-        if (value >= 140) isWarningOrDanger = true;
-        if (value >= 200 || value < 70) {
-            strokeColor = "#dc2626";
-            fillColor = "#fee2e2";
-        } else if (value >= 140) {
-            strokeColor = "#d97706";
-            fillColor = "#fef3c7";
-        }
+    if (statusLevel === "danger") {
+        isWarningOrDanger = true;
+        strokeColor = "#dc2626"; // Red
+        fillColor = "#fee2e2";
+    } else if (statusLevel === "pre") {
+        isWarningOrDanger = true; // Use special dot for pre as well? User asked for orange.
+        strokeColor = "#f97316"; // Orange-500
+        fillColor = "#ffedd5"; // Orange-100
     }
+    // Normal stays default (teal stroke, white fill)
 
     if (isWarningOrDanger) {
         return (
@@ -35,12 +27,12 @@ const CustomGlucoseDot = (props) => {
                 <circle
                     cx={cx}
                     cy={cy}
-                    r={7}
+                    r={statusLevel === 'danger' ? 7 : 6}
                     stroke={strokeColor}
                     strokeWidth={2}
                     fill={fillColor}
                 />
-                <circle cx={cx} cy={cy} r={3} fill={strokeColor} />
+                <circle cx={cx} cy={cy} r={statusLevel === 'danger' ? 3 : 2} fill={strokeColor} />
             </g>
         );
     }
