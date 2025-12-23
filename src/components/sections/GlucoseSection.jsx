@@ -29,6 +29,27 @@ import { CustomYAxisTick, CustomXAxisTick, CustomGlucoseDot, CustomTooltip } fro
 import { useChartScroll } from '../../hooks/useChartScroll';
 import { mealOptions } from '../../constants';
 
+const REF_RANGES = {
+    fasting: {
+        normal: { y1: 70, y2: 99, color: "green", label: "정상" },
+        pre: { y1: 100, y2: 125, color: "orange", label: "전단계" },
+        danger: { y1: 126, y2: 300, color: "red", label: "관리필요" }
+    },
+    one_hour_after: {
+        normal: { y1: 70, y2: 179, color: "green", label: "정상" },
+        pre: { y1: 180, y2: 199, color: "orange", label: "전단계" },
+        danger: { y1: 200, y2: 300, color: "red", label: "관리필요" }
+    },
+    two_hour_after: {
+        normal: { y1: 70, y2: 139, color: "green", label: "정상" },
+        pre: { y1: 140, y2: 199, color: "orange", label: "전단계" },
+        danger: { y1: 200, y2: 300, color: "red", label: "관리필요" }
+    },
+    all: {
+        normal: { y1: 70, y2: 140, color: "green", label: "일반 관리 목표" }
+    }
+};
+
 function GlucoseSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [deleteId, setDeleteId] = useState(null);
@@ -122,15 +143,22 @@ function GlucoseSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
     return (
         <div className="space-y-6">
             {/* Chart */}
-            <Card className="p-6 h-[850px] flex flex-col">
+            <Card className="p-6 h-[950px] flex flex-col">
                 <div className="flex justify-between items-center mb-2 flex-none">
                     <div>
                         <h2 className="text-lg font-bold flex items-center gap-2 text-gray-800">
                             <Activity size={18} /> 혈당 추이
                         </h2>
-                        <p className="text-sm text-gray-500">
-                            녹색 영역은 일반적인 관리 목표(70~140mg/dL)입니다.
-                        </p>
+                        <div className="flex gap-2 mt-1">
+                            {Object.values(REF_RANGES[filter] || REF_RANGES.all).map((range, idx) => (
+                                <span key={idx} className="text-xs flex items-center gap-1 text-gray-500">
+                                    <span className={`w-2 h-2 rounded-full ${range.color === 'green' ? 'bg-green-500' :
+                                            range.color === 'orange' ? 'bg-orange-400' : 'bg-red-400'
+                                        }`}></span>
+                                    {range.label} ({range.y1}~{range.y2})
+                                </span>
+                            ))}
+                        </div>
                     </div>
                     <div className="flex gap-4 text-xs">
                         <div className="flex items-center gap-1">
@@ -159,7 +187,7 @@ function GlucoseSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
                     ))}
                 </div>
 
-                <div className="flex w-full h-[700px] border border-gray-100 rounded-lg relative">
+                <div className="flex w-full h-[800px] border border-gray-100 rounded-lg relative">
                     <div className="w-[60px] h-full bg-white z-10 border-r border-gray-100 flex-none relative">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart
@@ -215,12 +243,15 @@ function GlucoseSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
                                         cursor={{ stroke: "#e5e7eb" }}
                                         position={{ y: 50 }}
                                     />
-                                    <ReferenceArea
-                                        y1={70}
-                                        y2={140}
-                                        fill="green"
-                                        fillOpacity={0.12}
-                                    />
+                                    {Object.values(REF_RANGES[filter] || REF_RANGES.all).map((range, idx) => (
+                                        <ReferenceArea
+                                            key={idx}
+                                            y1={range.y1}
+                                            y2={range.y2}
+                                            fill={range.color}
+                                            fillOpacity={range.color === 'red' ? 0.05 : 0.1}
+                                        />
+                                    ))}
                                     <Line
                                         type="monotone"
                                         dataKey="level"
