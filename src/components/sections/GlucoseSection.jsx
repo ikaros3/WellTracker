@@ -153,16 +153,7 @@ function GlucoseSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
                         <h2 className="text-lg font-bold flex items-center gap-2 text-gray-800">
                             <Activity size={18} /> 혈당 추이
                         </h2>
-                        <div className="flex gap-2 mt-1">
-                            {Object.values(REF_RANGES[filter] || REF_RANGES.all).map((range, idx) => (
-                                <span key={idx} className="text-xs flex items-center gap-1 text-gray-500">
-                                    <span className={`w-2 h-2 rounded-full ${range.color === 'green' ? 'bg-green-500' :
-                                        range.color === 'orange' ? 'bg-orange-400' : 'bg-red-400'
-                                        }`}></span>
-                                    {range.label} ({range.y1}~{range.y2})
-                                </span>
-                            ))}
-                        </div>
+
                     </div>
                     {/* Average Display */}
                     <div className="flex gap-2">
@@ -238,8 +229,8 @@ function GlucoseSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
                                 <div
                                     key={days}
                                     className={`flex flex-col items-center justify-center px-3 py-1.5 rounded-lg border transition-colors duration-200 ${main
-                                            ? "bg-teal-50 border-teal-100 min-w-[80px]"
-                                            : "bg-white border-transparent hover:bg-gray-50 min-w-[70px]"
+                                        ? "bg-teal-50 border-teal-100 min-w-[80px]"
+                                        : "bg-white border-transparent hover:bg-gray-50 min-w-[70px]"
                                         }`}
                                 >
                                     <span className={`text-xs text-gray-500 mb-0.5 whitespace-nowrap`}>
@@ -271,6 +262,18 @@ function GlucoseSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
                         >
                             {opt.label}
                         </button>
+                    ))}
+                </div>
+
+                {/* Legend moved here */}
+                <div className="flex gap-3 justify-center mb-6 -mt-4">
+                    {Object.values(REF_RANGES[filter] || REF_RANGES.all).map((range, idx) => (
+                        <span key={idx} className="text-xs flex items-center gap-1.5 text-gray-500">
+                            <span className={`w-2.5 h-2.5 rounded-full ${range.color === 'green' ? 'bg-green-500' :
+                                range.color === 'orange' ? 'bg-orange-400' : 'bg-red-400'
+                                }`}></span>
+                            {range.label} <span className="text-gray-400">({range.y1}~{range.y2})</span>
+                        </span>
                     ))}
                 </div>
 
