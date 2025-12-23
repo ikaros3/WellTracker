@@ -43,6 +43,7 @@ function GlucoseSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
         mealStatus: "fasting",
         medsTaken: false,
     });
+    const [filter, setFilter] = useState("all");
 
     const openModal = (record = null) => {
         if (record) {
@@ -81,13 +82,24 @@ function GlucoseSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
     };
 
     const chartData = useMemo(() => {
-        return records.map((r) => ({
+        let filteredRecords = records;
+        if (filter === "fasting") {
+            filteredRecords = records.filter((r) => r.mealStatus === "fasting");
+        } else if (filter === "one_hour_after") {
+            filteredRecords = records.filter((r) => r.mealStatus === "one_hour_after");
+        } else if (filter === "two_hour_after") {
+            filteredRecords = records.filter((r) =>
+                ["breakfast_after", "lunch_after", "dinner_after"].includes(r.mealStatus)
+            );
+        }
+
+        return filteredRecords.map((r) => ({
             name: `${r.date.slice(5)} ${r.time}`,
             level: parseInt(r.level),
             status: mealOptions.find((o) => o.value === r.mealStatus)?.label,
             mealStatus: r.mealStatus,
         }));
-    }, [records]);
+    }, [records, filter]);
 
     const yDomain = [0, 300];
     const yTicks = [0, 50, 100, 150, 200, 250, 300];
@@ -125,6 +137,26 @@ function GlucoseSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
                             <div className="w-2 h-2 rounded-full bg-teal-600"></div>혈당
                         </div>
                     </div>
+                </div>
+
+                <div className="bg-slate-100 p-1 rounded-xl mb-6 grid grid-cols-4 gap-1">
+                    {[
+                        { key: "all", label: "전체" },
+                        { key: "fasting", label: "공복" },
+                        { key: "one_hour_after", label: "식후 1시간" },
+                        { key: "two_hour_after", label: "식후 2시간" },
+                    ].map((opt) => (
+                        <button
+                            key={opt.key}
+                            onClick={() => setFilter(opt.key)}
+                            className={`py-2 px-1 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 ${filter === opt.key
+                                ? "bg-white text-teal-700 shadow-sm shadow-slate-200 ring-1 ring-black/5"
+                                : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                                }`}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
                 </div>
 
                 <div className="flex w-full h-[700px] border border-gray-100 rounded-lg relative">
