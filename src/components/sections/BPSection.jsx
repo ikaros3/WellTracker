@@ -38,15 +38,20 @@ function BPSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
     const [input, setInput] = useState({
         date: "",
         time: "",
-        systolic: "",
-        diastolic: "",
+        measurements: [{ systolic: "", diastolic: "" }],
         medsTaken: false,
     });
 
     const openModal = (record = null) => {
         if (record) {
             setEditId(record.id);
-            setInput(record);
+            // 편집 시 저장된 평균값을 1차 측정값으로 표시
+            setInput({
+                ...record,
+                measurements: [
+                    { systolic: record.systolic, diastolic: record.diastolic }
+                ]
+            });
         } else {
             setEditId(null);
             const now = new Date();
@@ -58,8 +63,7 @@ function BPSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
             setInput({
                 date: `${year}-${month}-${day}`,
                 time: `${hours}:${minutes}`,
-                systolic: "",
-                diastolic: "",
+                measurements: [{ systolic: "", diastolic: "" }],
                 medsTaken: false,
             });
         }
@@ -68,9 +72,39 @@ function BPSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!input.systolic || !input.diastolic) return;
-        if (editId) onUpdate({ ...input, id: editId });
-        else onAdd(input);
+
+        // 유효한 측정값만 필터링 (둘 다 값이 있는 경우만)
+        const validMeasurements = input.measurements.filter(
+            m => m.systolic && m.diastolic
+        );
+
+        if (validMeasurements.length === 0) return;
+
+        // 평균 계산
+        const avgSystolic = Math.round(
+            validMeasurements.reduce((sum, m) => sum + parseInt(m.systolic), 0) /
+            validMeasurements.length
+        );
+        const avgDiastolic = Math.round(
+            validMeasurements.reduce((sum, m) => sum + parseInt(m.diastolic), 0) /
+            validMeasurements.length
+        );
+
+        // 평균값으로 저장
+        const recordToSave = {
+            date: input.date,
+            time: input.time,
+            systolic: avgSystolic.toString(),
+            diastolic: avgDiastolic.toString(),
+            medsTaken: input.medsTaken
+        };
+
+        if (editId) {
+            onUpdate({ ...recordToSave, id: editId });
+        } else {
+            onAdd(recordToSave);
+        }
+
         setIsModalOpen(false);
     };
 
@@ -364,40 +398,107 @@ function BPSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
                             required
                         />
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
-                        <Input
-                            label="수축기 (최고)"
-                            type="number"
-                            placeholder="120"
-                            value={input.systolic}
-                            onChange={(e) => setInput({ ...input, systolic: e.target.value })}
-                            enterKeyHint="done"
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                    e.preventDefault();
-                                    e.target.blur();
-                                }
-                            }}
-                            required
-                        />
-                        <Input
-                            label="이완기 (최저)"
-                            type="number"
-                            placeholder="80"
-                            value={input.diastolic}
-                            onChange={(e) =>
-                                setInput({ ...input, diastolic: e.target.value })
-                            }
-                            enterKeyHint="done"
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                    e.preventDefault();
-                                    e.target.blur();
-                                }
-                            }}
-                            required
-                        />
+
+                    {/* 측정값 입력 영역 */}
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <label className="block text-sm font-medium text-gray-700">
+                                혈압 측정값
+                            </label>
+                            {input.measurements.length < 5 && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => {
+                                        setInput({
+                                            ...input,
+                                            measurements: [
+                                                ...input.measurements,
+                                                { systolic: "", diastolic: "" }
+                                            ]
+                                        });
+                                    }}
+                                    className="text-xs py-1 px-2 h-auto"
+                                >
+                                    <Plus size={14} /> 측정값 추가
+                                </Button>
+                            )}
+                        </div>
+
+                        {input.measurements.map((measurement, index) => (
+                            <div key={index} className="flex items-center gap-3">
+                                <span className="text-sm font-medium text-gray-700 w-8 flex-shrink-0">
+                                    {index + 1}차
+                                </span>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2">
+                                        <label className="text-sm text-gray-700 flex-shrink-0">수축기</label>
+                                        <input
+                                            type="number"
+                                            placeholder="120"
+                                            value={measurement.systolic}
+                                            onChange={(e) => {
+                                                const newMeasurements = [...input.measurements];
+                                                newMeasurements[index].systolic = e.target.value;
+                                                setInput({ ...input, measurements: newMeasurements });
+                                            }}
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter") {
+                                                    e.preventDefault();
+                                                    e.target.blur();
+                                                }
+                                            }}
+                                            className="w-20 px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        />
+                                    </div>
+                                    <span className="text-gray-400 text-sm">/</span>
+                                    <div className="flex items-center gap-2">
+                                        <label className="text-sm text-gray-700 flex-shrink-0">이완기</label>
+                                        <input
+                                            type="number"
+                                            placeholder="80"
+                                            value={measurement.diastolic}
+                                            onChange={(e) => {
+                                                const newMeasurements = [...input.measurements];
+                                                newMeasurements[index].diastolic = e.target.value;
+                                                setInput({ ...input, measurements: newMeasurements });
+                                            }}
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter") {
+                                                    e.preventDefault();
+                                                    e.target.blur();
+                                                }
+                                            }}
+                                            className="w-20 px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        />
+                                    </div>
+                                </div>
+                                {input.measurements.length > 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setInput({
+                                                ...input,
+                                                measurements: input.measurements.filter((_, i) => i !== index)
+                                            });
+                                        }}
+                                        className="text-red-500 hover:text-red-700 p-1 flex-shrink-0"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+
+                        {input.measurements.length > 1 && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                <p className="text-xs text-blue-700">
+                                    💡 여러 측정값을 입력하면 평균값이 자동으로 계산되어 저장됩니다.
+                                </p>
+                            </div>
+                        )}
                     </div>
+
                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                         <Checkbox
                             label="혈압약 복용 완료"
