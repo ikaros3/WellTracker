@@ -17,6 +17,13 @@ const firebaseConfig = {
 // Firebase 앱 초기화
 const app = initializeApp(firebaseConfig);
 
+// Config 검증
+if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes("YOUR_")) {
+    console.error("❌ Firebase 설정이 올바르지 않습니다. 환경 변수(.env 또는 GitHub Secrets)가 누락되었습니다.");
+    console.error("현재 설정값:", firebaseConfig);
+}
+
+
 // Firebase 서비스 인스턴스
 export const auth = getAuth(app);
 export const db = getFirestore(app);
