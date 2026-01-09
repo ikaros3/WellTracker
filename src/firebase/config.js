@@ -1,7 +1,7 @@
 // Firebase SDK 초기화 설정
 import { initializeApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator, enableIndexedDbPersistence } from 'firebase/firestore';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 
 // Firebase 설정 - Firebase Console에서 복사한 값으로 교체하세요
 const firebaseConfig = {
@@ -34,17 +34,15 @@ if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes("YOUR_")) {
 
 // Firebase 서비스 인스턴스
 export const auth = getAuth(app);
-export const db = getFirestore(app);
 
-// 오프라인 데이터 지속성 활성화
-enableIndexedDbPersistence(db)
-    .catch((err) => {
-        if (err.code == 'failed-precondition') {
-            console.warn('⚠️ 오프라인 지속성 실패: 여러 탭이 열려있습니다.');
-        } else if (err.code == 'unimplemented') {
-            console.warn('⚠️ 브라우저가 오프라인 지속성을 지원하지 않습니다.');
-        }
-    });
+// Firestore 초기화 (오프라인 지속성 포함 - 새로운 API 사용)
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
+
+export const db = initializeFirestore(app, {
+    localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager()
+    })
+});
 
 // Analytics는 프로덕션 환경에서만 초기화 (에뮬레이터는 지원하지 않음)
 let analytics = null;
