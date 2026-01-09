@@ -4,16 +4,12 @@ import Card from '../common/Card';
 import Button from '../common/Button';
 import Input from '../common/Input';
 import Checkbox from '../common/Checkbox';
-import BackupRestoreCard from './BackupRestoreCard';
 
 function ProfileSection({
     profile,
     onChange,
     onMedToggle,
     onSave,
-    onExport,
-    onImport,
-    onLoad,
 }) {
     const [isEditing, setIsEditing] = useState(!profile.name);
 
@@ -107,12 +103,6 @@ function ProfileSection({
                         </div>
                     </div>
                 </Card>
-                <BackupRestoreCard
-                    onExport={onExport}
-                    onImport={onImport}
-                    onSave={onSave}
-                    onLoad={onLoad}
-                />
             </div>
         );
     }
@@ -230,12 +220,6 @@ function ProfileSection({
                     <Check size={20} /> 정보 저장 완료
                 </Button>
             </Card>
-            <BackupRestoreCard
-                onExport={onExport}
-                onImport={onImport}
-                onSave={onSave}
-                onLoad={onLoad}
-            />
         </div>
     );
 }

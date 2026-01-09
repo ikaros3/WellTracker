@@ -8,70 +8,24 @@
 - 수축기/이완기 혈압 기록 및 추적
 - 시각적 라인 차트로 추이 분석
 - 정상/주의/고혈압 상태 자동 판정
-- 혈압약 복용 여부 기록
 
 ### 🩸 혈당 관리
-- 혈당 수치 기록 (공복, 식후 1시간, 식후 2시간 등)
+- 혈당 수치 기록 (공복, 식후 등)
 - 시각적 라인 차트로 추이 분석
 - 측정 시점별 상태 자동 평가
-- 당뇨약/인슐린 복용 여부 기록
 
 ### 👤 프로필 관리
 - 기본 정보 (이름, 생년월일, 키, 체중, 성별)
-- 복용 중인 약물 체크 (혈압약, 당뇨약, 고지혈증약, 아스피린)
+- 복용 중인 약물 체크
 
 ### 🤖 AI 건강 코치
 - Gemini AI 기반 건강 분석
-- 최근 기록 데이터 기반 맞춤형 건강 가이드
-- 식단 및 운동 제안
+- 맞춤형 건강 가이드 제공
 
-### 💾 데이터 관리
-- 브라우저 로컬 저장소 자동 저장
-- JSON 파일로 데이터 내보내기/가져오기
-- CSV(엑셀) 형식 다운로드
-
----
-
-## 📁 프로젝트 구조
-
-```
-src/
-├── components/
-│   ├── common/          # 공통 UI 컴포넌트
-│   │   ├── Button.jsx
-│   │   ├── Card.jsx
-│   │   ├── Checkbox.jsx
-│   │   ├── Input.jsx
-│   │   ├── Modal.jsx
-│   │   ├── PaginationControls.jsx
-│   │   └── index.js
-│   ├── charts/          # 차트 관련 컴포넌트
-│   │   ├── CustomBPDot.jsx
-│   │   ├── CustomGlucoseDot.jsx
-│   │   ├── CustomTooltip.jsx
-│   │   ├── CustomXAxisTick.jsx
-│   │   ├── CustomYAxisTick.jsx
-│   │   └── index.js
-│   └── sections/        # 페이지 섹션 컴포넌트
-│       ├── AIInsightSection.jsx
-│       ├── BackupRestoreCard.jsx
-│       ├── BPSection.jsx
-│       ├── GlucoseSection.jsx
-│       ├── ProfileSection.jsx
-│       ├── ReferenceGuide.jsx
-│       └── index.js
-├── constants/           # 상수 정의
-│   └── index.js
-├── hooks/               # 커스텀 훅
-│   └── useChartScroll.js
-├── services/            # 외부 API 서비스
-│   └── geminiApi.js
-├── utils/               # 유틸리티 함수
-│   └── fileHelpers.js
-├── App.jsx              # 메인 앱 컴포넌트
-├── main.jsx             # 앱 진입점
-└── styles.css           # 전역 스타일
-```
+### ☁️ 클라우드 동기화
+- Google OAuth 인증
+- Firebase Firestore 데이터 동기화
+- LocalStorage 실시간 백업
 
 ---
 
@@ -89,7 +43,17 @@ npm install
 npm run dev
 ```
 
-브라우저에서 `http://localhost:5173`을 열어 앱을 확인하세요.
+### Firebase Emulator 실행 (개발용)
+
+```bash
+npm run dev:emulator
+```
+
+또는 Vite + Emulator 동시 실행:
+
+```bash
+npm run dev:full
+```
 
 ### 프로덕션 빌드
 
@@ -97,7 +61,103 @@ npm run dev
 npm run build
 ```
 
-빌드된 파일은 `dist/` 디렉토리에 생성됩니다.
+---
+
+## 🔥 Firebase 설정
+
+### 1. Firebase 프로젝트 생성
+
+1. [Firebase Console](https://console.firebase.google.com)에서 새 프로젝트 생성
+2. Authentication > Sign-in method에서 **Google** 활성화
+3. Firestore Database 생성 (프로덕션 모드)
+
+### 2. 환경 변수 설정
+
+`.env.example`을 `.env.local`로 복사하고 Firebase 설정값 입력:
+
+```bash
+VITE_FIREBASE_API_KEY=your_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+VITE_USE_FIREBASE_EMULATOR=false
+```
+
+### 3. Firebase CLI 설치 및 로그인
+
+```bash
+npm install -g firebase-tools
+firebase login
+```
+
+### 4. Firestore 보안 규칙 배포
+
+```bash
+firebase deploy --only firestore:rules
+```
+
+---
+
+## 🚀 배포 (GitHub → Firebase Hosting)
+
+### 자동 배포 설정
+
+1. **Firebase 서비스 계정 키 생성**
+   - Firebase Console > 프로젝트 설정 > 서비스 계정
+   - "새 비공개 키 생성" 클릭
+   - JSON 파일 다운로드
+
+2. **GitHub Secrets 설정**
+   - Repository > Settings > Secrets and variables > Actions
+   - 다음 시크릿 추가:
+     - `FIREBASE_SERVICE_ACCOUNT`: 서비스 계정 JSON 전체 내용
+     - `VITE_FIREBASE_API_KEY`
+     - `VITE_FIREBASE_AUTH_DOMAIN`
+     - `VITE_FIREBASE_PROJECT_ID`
+     - `VITE_FIREBASE_STORAGE_BUCKET`
+     - `VITE_FIREBASE_MESSAGING_SENDER_ID`
+     - `VITE_FIREBASE_APP_ID`
+
+3. **배포**
+   ```bash
+   git push origin main
+   ```
+   GitHub Actions가 자동으로 빌드 및 배포합니다.
+
+### 수동 배포
+
+```bash
+npm run build
+firebase deploy --only hosting
+```
+
+---
+
+## 📁 프로젝트 구조
+
+```
+src/
+├── components/
+│   ├── auth/           # 인증 관련 컴포넌트
+│   ├── common/         # 공통 UI 컴포넌트
+│   ├── charts/         # 차트 컴포넌트
+│   └── sections/       # 페이지 섹션
+├── contexts/
+│   └── AuthContext.jsx # 인증 Context
+├── firebase/
+│   └── config.js       # Firebase 설정
+├── hooks/
+│   ├── useChartScroll.js
+│   └── useSyncManager.js # 동기화 훅
+├── services/
+│   ├── geminiApi.js
+│   └── firestoreService.js # Firestore 서비스
+├── utils/
+├── App.jsx
+└── main.jsx
+```
 
 ---
 
@@ -107,106 +167,36 @@ npm run build
 |---------|------|
 | **프레임워크** | React 19 |
 | **빌드 도구** | Vite 6 |
-| **차트 라이브러리** | Recharts 3 |
+| **차트** | Recharts 3 |
 | **아이콘** | Lucide React |
 | **스타일링** | Tailwind CSS (CDN) |
-| **백엔드** | Firebase 11 |
-
----
-
-## ☁️ CodeSandbox
-
-이 프로젝트는 CodeSandbox에서 바로 실행할 수 있습니다:
-
-1. GitHub 저장소를 CodeSandbox에 import
-2. 자동으로 `npm install` 및 `npm run dev` 실행
-3. 미리보기 창에서 앱 확인
-
-```
-https://codesandbox.io/s/github/[your-username]/WellTracker
-```
-
----
-
-## 📁 파일 설명
-
-### 주요 컴포넌트
-
-| 파일 | 설명 |
-|------|------|
-| `App.jsx` | 메인 앱 컴포넌트, 상태 관리 및 라우팅 |
-| `BPSection.jsx` | 혈압 기록/차트/목록 섹션 |
-| `GlucoseSection.jsx` | 혈당 기록/차트/목록 섹션 |
-| `ProfileSection.jsx` | 사용자 프로필 관리 섹션 |
-| `AIInsightSection.jsx` | AI 건강 분석 섹션 |
-
-### 공통 컴포넌트
-
-| 파일 | 설명 |
-|------|------|
-| `Button.jsx` | 다양한 스타일 지원 버튼 |
-| `Card.jsx` | 카드 래퍼 컴포넌트 |
-| `Modal.jsx` | 모달 다이얼로그 |
-| `Input.jsx` | 레이블이 있는 입력 필드 |
-| `Checkbox.jsx` | 체크박스 컴포넌트 |
-| `PaginationControls.jsx` | 페이지네이션 컨트롤 |
-
-### 차트 컴포넌트
-
-| 파일 | 설명 |
-|------|------|
-| `CustomBPDot.jsx` | 혈압 차트 포인트 (상태별 색상) |
-| `CustomGlucoseDot.jsx` | 혈당 차트 포인트 (상태별 색상) |
-| `CustomTooltip.jsx` | 차트 툴팁 |
-| `CustomXAxisTick.jsx` | X축 커스텀 틱 (날짜/시간) |
-| `CustomYAxisTick.jsx` | Y축 커스텀 틱 |
+| **백엔드** | Firebase 11 (Auth, Firestore, Hosting) |
+| **CI/CD** | GitHub Actions |
 
 ---
 
 ## 📊 데이터 구조
 
-### 혈압 기록 (BP Record)
-```javascript
-{
-  id: number,          // 고유 ID (타임스탬프)
-  date: string,        // 날짜 (YYYY-MM-DD)
-  time: string,        // 시간 (HH:MM)
-  systolic: string,    // 수축기 혈압
-  diastolic: string,   // 이완기 혈압
-  medsTaken: boolean   // 혈압약 복용 여부
-}
+### Firestore 구조
+
+```
+users/{userId}/
+├── profile: { name, birthdate, height, weight, gender, meds }
+├── bpRecords: [{ id, date, time, systolic, diastolic, medsTaken }]
+└── glucoseRecords: [{ id, date, time, level, mealStatus, medsTaken }]
 ```
 
-### 혈당 기록 (Glucose Record)
-```javascript
-{
-  id: number,          // 고유 ID (타임스탬프)
-  date: string,        // 날짜 (YYYY-MM-DD)
-  time: string,        // 시간 (HH:MM)
-  level: string,       // 혈당 수치 (mg/dL)
-  mealStatus: string,  // 측정 시점 (fasting, one_hour_after, etc.)
-  medsTaken: boolean   // 당뇨약 복용 여부
-}
-```
+### 동기화 시점
 
----
-
-## 🔒 로컬 저장소 키
-
-| 키 | 설명 |
-|----|------|
-| `health_profile` | 사용자 프로필 정보 |
-| `health_bp` | 혈압 기록 배열 |
-| `health_glucose` | 혈당 기록 배열 |
+| 이벤트 | 동작 |
+|--------|------|
+| 로그인 직후 | Firestore → State |
+| 데이터 추가/수정 | State → Firestore + LocalStorage |
+| 앱 종료/로그아웃 | State → Firestore |
+| 수동 동기화 | State → Firestore |
 
 ---
 
 ## 📄 라이선스
 
 MIT
-
----
-
-## 🤝 기여
-
-버그 리포트, 기능 제안, 풀 리퀘스트 환영합니다!
