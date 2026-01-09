@@ -14,6 +14,14 @@ const firebaseConfig = {
     measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "YOUR_MEASUREMENT_ID"
 };
 
+// [디버깅] 환경 변수 로드 확인
+console.log("🔥 Firebase Config Load Check:", {
+    hasApiKey: !!import.meta.env.VITE_FIREBASE_API_KEY,
+    hasAppId: !!import.meta.env.VITE_FIREBASE_APP_ID,
+    configAppId: firebaseConfig.appId, // YOUR_APP_ID 인지 확인용
+    isDev: import.meta.env.DEV
+});
+
 // Firebase 앱 초기화
 const app = initializeApp(firebaseConfig);
 
