@@ -33,7 +33,6 @@ function GlucoseSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [deleteId, setDeleteId] = useState(null);
     const [editId, setEditId] = useState(null);
-    const { scrollContainerRef } = useChartScroll(records.length, 12);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 15;
     const [input, setInput] = useState({
@@ -44,6 +43,22 @@ function GlucoseSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
         medsTaken: false,
     });
     const [filter, setFilter] = useState("all");
+
+    // Shared filtered records based on active filter
+    const filteredRecords = useMemo(() => {
+        if (filter === "fasting") {
+            return records.filter((r) => r.mealStatus === "fasting");
+        } else if (filter === "one_hour_after") {
+            return records.filter((r) => r.mealStatus === "one_hour_after");
+        } else if (filter === "two_hour_after") {
+            return records.filter((r) =>
+                ["breakfast_after", "lunch_after", "dinner_after"].includes(r.mealStatus)
+            );
+        }
+        return records;
+    }, [records, filter]);
+
+    const { scrollContainerRef } = useChartScroll(filteredRecords.length, 12, [filter, records]);
 
     const openModal = (record = null) => {
         if (record) {
@@ -81,19 +96,7 @@ function GlucoseSection({ records, onAdd, onUpdate, onDelete, onDownload }) {
         setDeleteId(null);
     };
 
-    // Shared filtered records based on active filter
-    const filteredRecords = useMemo(() => {
-        if (filter === "fasting") {
-            return records.filter((r) => r.mealStatus === "fasting");
-        } else if (filter === "one_hour_after") {
-            return records.filter((r) => r.mealStatus === "one_hour_after");
-        } else if (filter === "two_hour_after") {
-            return records.filter((r) =>
-                ["breakfast_after", "lunch_after", "dinner_after"].includes(r.mealStatus)
-            );
-        }
-        return records;
-    }, [records, filter]);
+
 
     const chartData = useMemo(() => {
         return filteredRecords.map((r) => {
